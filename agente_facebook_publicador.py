@@ -258,22 +258,31 @@ def publicar_carrusel_facebook(caption: str, imagen_urls: List[str]) -> bool:
 
 
 def publicar_link_facebook(caption: str, link: str, imagen_url: Optional[str] = None) -> bool:
-    """Publica un post con link (ideal para tu tienda Shopify)"""
+    """Publica una foto con el link incluido en el caption"""
     
-    print(f"\n🔗 Publicando LINK en Facebook...")
+    print(f"\n🔗 Publicando con LINK en Facebook...")
     print(f"   Link: {link}")
     print(f"   Caption: {caption[:80]}...")
     
-    url = f"https://graph.facebook.com/v18.0/{FACEBOOK_PAGE_ID}/feed"
-    
-    payload = {
-        "message": caption,
-        "link": link,
-        "access_token": META_TOKEN
-    }
+    # Agregar el link al final del caption
+    caption_con_link = f"{caption}\n\n🛒 Compra aquí: {link}"
     
     if imagen_url:
-        payload["picture"] = imagen_url
+        # Publicar como foto con caption que incluye el link
+        url = f"https://graph.facebook.com/v18.0/{FACEBOOK_PAGE_ID}/photos"
+        
+        payload = {
+            "url": imagen_url,
+            "caption": caption_con_link,
+            "access_token": META_TOKEN
+        }
+    else:
+        # Si no hay imagen, publicar como mensaje simple
+        url = f"https://graph.facebook.com/v18.0/{FACEBOOK_PAGE_ID}/feed"
+        payload = {
+            "message": caption_con_link,
+            "access_token": META_TOKEN
+        }
     
     try:
         response = requests.post(url, data=payload, timeout=15)
@@ -284,14 +293,14 @@ def publicar_link_facebook(caption: str, link: str, imagen_url: Optional[str] = 
         if "id" in resultado:
             post_id = resultado["id"]
             print(f"   ✓ Post publicado! ID: {post_id}")
-            print(f"   📍 URL: https://facebook.com/{post_id}")
+            print(f"   URL: https://facebook.com/{post_id}")
             return True
         else:
-            print(f"   ⚠ Respuesta: {resultado}")
+            print(f"   Respuesta: {resultado}")
             return False
             
     except requests.exceptions.RequestException as e:
-        print(f"   ✗ Error: {str(e)[:100]}")
+        print(f"   Error: {str(e)[:200]}")
         return False
 
 
