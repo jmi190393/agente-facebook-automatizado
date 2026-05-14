@@ -331,16 +331,9 @@ def publicar_contenido():
     
     resultado = False
     
-    if tipo_post == "foto" and imagen_urls:
-        resultado = publicar_foto_facebook(caption, imagen_urls[0])
-    
-    elif tipo_post == "carrusel" and imagen_urls:
-        resultado = publicar_carrusel_facebook(caption, imagen_urls)
-    
-    elif tipo_post == "link":
-        # Link a la tienda o a producto específico
-        link = f"https://{SHOPIFY_STORE}"
-        resultado = publicar_link_facebook(caption, link, imagen_urls[0] if imagen_urls else None)
+    # SIEMPRE publicar como LINK a tu tienda con imagen
+    link = "https://liftor.com.mx"
+    resultado = publicar_link_facebook(caption, link, imagen_urls[0] if imagen_urls else None)
     
     # Paso 7: Registrar
     print(f"\n[7] Registrando...")
