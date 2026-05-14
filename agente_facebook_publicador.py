@@ -15,6 +15,22 @@ import random
 import anthropic
 
 # ============================================================
+# FUNCIÓN PARA ACORTAR URLs
+# ============================================================
+def acortar_url(url_larga: str) -> str:
+    """Acorta una URL usando TinyURL"""
+    try:
+        response = requests.get(f"https://tinyurl.com/api-create.php?url={url_larga}", timeout=5)
+        if response.status_code == 200:
+            url_corta = response.text.strip()
+            print(f"   Link corto: {url_corta}")
+            return url_corta
+        else:
+            return url_larga
+    except:
+        return url_larga
+
+# ============================================================
 # CARGAR .env AUTOMÁTICAMENTE
 # ============================================================
 def cargar_env():
@@ -61,13 +77,13 @@ client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
 # ============================================================
 
 def obtener_productos_shopify(limite: int = 30) -> List[Dict]:
-    """Obtiene productos activos de Shopify con imágenes"""
+    """Obtiene productos activos de Shopify con imágenes y URLs"""
     url = f"https://{SHOPIFY_STORE}/admin/api/2024-01/products.json"
     
     params = {
         "status": "active",
         "limit": limite,
-        "fields": "id,title,body_html,image,images,variants,tags,product_type"
+        "fields": "id,title,body_html,image,images,variants,tags,product_type,handle"
     }
     
     try:
@@ -81,6 +97,11 @@ def obtener_productos_shopify(limite: int = 30) -> List[Dict]:
         
         productos = response.json().get("products", [])
         productos_con_img = [p for p in productos if p.get("image")]
+        
+        # Agregar URL del producto (usar dominio público liftor.com.mx)
+        for p in productos_con_img:
+            handle = p.get("handle", "")
+            p["url"] = f"https://www.liftor.com.mx/products/{handle}" if handle else f"https://www.liftor.com.mx"
         
         print(f"✓ {len(productos_con_img)} productos obtenidos de Shopify")
         return productos_con_img
@@ -331,9 +352,11 @@ def publicar_contenido():
     
     resultado = False
     
-    # SIEMPRE publicar como LINK a tu tienda con imagen
-    link = "https://liftor.com.mx"
-    resultado = publicar_link_facebook(caption, link, imagen_urls[0] if imagen_urls else None)
+    # SIEMPRE publicar como LINK al producto específico con URL acortada
+    link_producto = productos_sel[0].get("url", f"https://{SHOPIFY_STORE}") if productos_sel else f"https://{SHOPIFY_STORE}"
+    print(f"   Link original: {link_producto}")
+    link_corto = acortar_url(link_producto)
+    resultado = publicar_link_facebook(caption, link_corto, imagen_urls[0] if imagen_urls else None)
     
     # Paso 7: Registrar
     print(f"\n[7] Registrando...")
